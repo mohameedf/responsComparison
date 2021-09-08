@@ -1,9 +1,5 @@
 {
-    "publishConfig": {
-        "registry":"https://npm.pkg.github.com"
-      },
     "homepage": "https://github.com/mohameedf/responsComparison",
     "name": "respons_compression",
-    "version": "1.0.2"
-    
+    "version": "1.0.4"
 }

@@ -1,47 +1,52 @@
 class Responsecompression {
   static encrypt(c) {
-    c = Buffer.from(JSON.stringify({ ...c })).toString("base64");
-    var f = c.split("");
-    var x = "charCodeAt",
-      b,
-      e = {},
-      d = [],
-      a = f[0],
-      g = 256;
-    for (b = 1; b < f.length; b++)
-      (c = f[b]),
-        null != e[a + c]
-          ? (a += c)
-          : (d.push(1 < a.length ? e[a] : a[x](0)),
-            (e[a + c] = g),
-            g++,
-            (a = c));
-    d.push(1 < a.length ? e[a] : a[x](0));
-    for (b = 0; b < d.length; b++) d[b] = String.fromCharCode(d[b]);
-    return d.join("");
+    var s = Buffer.from(JSON.stringify({ ...c })).toString("base64");
+    var dict = {};
+    var data = (s + "").split("");
+    var out = [];
+    var currChar;
+    var phrase = data[0];
+    var code = 256;
+    for (var i = 1; i < data.length; i++) {
+      currChar = data[i];
+      if (dict[phrase + currChar] != null) {
+        phrase += currChar;
+      } else {
+        out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+        dict[phrase + currChar] = code;
+        code++;
+        phrase = currChar;
+      }
+    }
+    out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+    return out;
   }
   static MainDecrypt(b) {
-    var f,
-      a,
-      e = {},
-      d = b.split(""),
-      c = (f = d[0]),
-      g = [c],
-      o = 256,
-      h = o;
-    for (b = 1; b < d.length; b++)
-      (a = d[b].charCodeAt(0)),
-        (a = h > a ? d[b] : e[a] ? e[a] : f + c),
-        g.push(a),
-        (c = a.charAt(0)),
-        (e[o] = f + c),
-        o++,
-        (f = a);
-    return g.join("");
+    var data = b;
+    var dict = {};
+    var currChar = String.fromCharCode(data[0]);
+    var oldPhrase = currChar;
+    var out = [currChar];
+    var code = 256;
+    var phrase;
+    for (var i = 1; i < data.length; i++) {
+      var currCode = data[i];
+      if (currCode < 256) {
+        phrase = String.fromCharCode(data[i]);
+      } else {
+        phrase = dict[currCode] ? dict[currCode] : oldPhrase + currChar;
+      }
+      out += phrase;
+      currChar = phrase[0];
+      dict[code] = oldPhrase + currChar;
+      code++;
+      oldPhrase = phrase;
+    }
+    return out;
   }
   static decrypt(d) {
     return JSON.parse(
-      Buffer.from(this.MainDecrypt(d), "base64").toString("utf-8")
+      Buffer.from(this.MainDecrypt(d).toString(), "base64").toString("utf-8")
     );
   }
   static middleware(req, res, next) {
